@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Card Sizer</title>
+<style>
+  :root {
+    --bg: #07070a;
+    --panel: #111116;
+    --panel-2: #17171e;
+    --line: #2a2418;
+    --gold: #f5c451;
+    --gold-2: #b8871f;
+    --text: #f4efe3;
+    --muted: #8d8676;
+    --danger: #ff6b6b;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; }
+  body {
+    font-family: "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
+    color: var(--text);
+    background:
+      radial-gradient(900px 400px at 50% -120px, rgba(245,196,81,.18), transparent 70%),
+      var(--bg);
+    min-height: 100vh;
+    padding: 20px 16px 60px;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; }
+
+  header { text-align: center; margin-bottom: 22px; }
+  .crown { font-size: 30px; line-height: 1; filter: drop-shadow(0 0 10px rgba(245,196,81,.5)); }
+  h1 {
+    margin: 6px 0 4px; font-size: 28px; letter-spacing: 3px; text-transform: uppercase;
+    background: linear-gradient(180deg, #ffe9a8, var(--gold) 50%, var(--gold-2));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  header p { margin: 0; color: var(--muted); font-size: 13px; letter-spacing: 1px; }
+
+  .panel {
+    background: linear-gradient(180deg, var(--panel-2), var(--panel));
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 14px;
+    margin-bottom: 14px;
+    box-shadow: 0 8px 30px rgba(0,0,0,.45), inset 0 1px 0 rgba(245,196,81,.08);
+  }
+  .panel-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+  .panel-title { font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; font-size: 14px; color: var(--gold); }
+  .count {
+    font-size: 12px; color: #1a1304; background: var(--gold);
+    border-radius: 999px; padding: 3px 10px; font-weight: 700; min-width: 28px; text-align: center;
+  }
+  .count.zero { background: #2a2a32; color: var(--muted); }
+
+  .drop {
+    border: 1.5px dashed #4a3d1d; border-radius: 12px; padding: 18px 10px; text-align: center;
+    color: var(--muted); font-size: 14px; background: rgba(245,196,81,.03);
+    transition: .15s;
+  }
+  .drop.over { border-color: var(--gold); background: rgba(245,196,81,.10); color: var(--text); }
+  .btn {
+    appearance: none; border: 0; cursor: pointer; font-weight: 700; letter-spacing: .5px;
+    border-radius: 12px; padding: 13px 18px; font-size: 15px; font-family: inherit;
+    transition: transform .08s, opacity .15s;
+  }
+  .btn:active { transform: scale(.97); }
+  .btn:disabled { opacity: .4; cursor: not-allowed; }
+  .btn-gold { color: #1a1304; background: linear-gradient(180deg, #ffe08a, var(--gold) 45%, var(--gold-2)); box-shadow: 0 6px 20px rgba(245,196,81,.25); }
+  .btn-ghost { color: var(--gold); background: transparent; border: 1px solid #5a4820; }
+  .btn-sm { padding: 9px 14px; font-size: 13px; border-radius: 10px; }
+  .drop .btn { margin-top: 8px; }
+  input[type=file] { display: none; }
+
+  .files { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 8px; margin-top: 12px; }
+  .file { position: relative; border-radius: 10px; overflow: hidden; border: 1px solid var(--line); background: #0b0b0f; }
+  .file img { width: 100%; height: 66px; object-fit: cover; display: block; }
+  .file span { display: block; font-size: 10px; color: var(--muted); padding: 4px 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .file button {
+    position: absolute; top: 4px; right: 4px; width: 22px; height: 22px; border-radius: 50%;
+    border: 0; background: rgba(0,0,0,.75); color: #fff; font-size: 13px; line-height: 22px; padding: 0; cursor: pointer;
+  }
+  .clear { margin-top: 10px; font-size: 12px; color: var(--danger); background: none; border: 0; padding: 4px 0; cursor: pointer; }
+
+  details { margin-bottom: 14px; }
+  summary {
+    list-style: none; cursor: pointer; text-align: center; color: var(--muted);
+    font-size: 13px; letter-spacing: 1px; padding: 8px; text-transform: uppercase;
+  }
+  summary::-webkit-details-marker { display: none; }
+  .settings { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .settings label { font-size: 12px; color: var(--muted); letter-spacing: .5px; }
+  .settings input {
+    width: 100%; margin-top: 4px; padding: 10px; border-radius: 10px; font-size: 15px;
+    background: #0a0a0e; color: var(--text); border: 1px solid #2c2c36; font-family: inherit;
+  }
+  .settings input:focus { outline: none; border-color: var(--gold); }
+
+  .actions { display: flex; flex-direction: column; gap: 10px; margin: 6px 0 12px; }
+  .actions .btn { width: 100%; }
+  .btn-main { padding: 16px; font-size: 17px; letter-spacing: 1.5px; text-transform: uppercase; }
+
+  .progress { height: 6px; background: #1b1b22; border-radius: 99px; overflow: hidden; margin: 8px 0; display: none; }
+  .progress i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--gold-2), var(--gold)); transition: width .2s; }
+  #status { text-align: center; color: var(--gold); font-size: 14px; min-height: 20px; margin-bottom: 8px; }
+
+  .results-head { display: flex; align-items: center; justify-content: space-between; margin: 18px 0 10px; }
+  .results-head h2 { margin: 0; font-size: 15px; letter-spacing: 2px; text-transform: uppercase; color: var(--gold); }
+  #results { display: grid; grid-template-columns: 1fr; gap: 12px; }
+  @media (min-width: 560px) { #results { grid-template-columns: 1fr 1fr; } }
+  .item { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 10px; }
+  .thumb { border-radius: 8px; background: repeating-conic-gradient(#26262e 0% 25%, #17171c 0% 50%) 50% / 14px 14px; }
+  .thumb img { width: 100%; display: block; }
+  .name { font-size: 12px; color: var(--muted); margin: 8px 0; word-break: break-all; }
+  .item a.btn { display: block; text-align: center; text-decoration: none; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="crown">♛</div>
+    <h1>Card Sizer</h1>
+    <p>1920 × 1080 TRANSPARENT PNG</p>
+  </header>
+
+  <!-- LEFT -->
+  <section class="panel">
+    <div class="panel-head">
+      <div class="panel-title">Left Cards</div>
+      <div class="count zero" id="cntLeft">0</div>
+    </div>
+    <div class="drop" id="dropLeft">
+      Tap "Add One" and choose a card. It returns instantly, so just tap again for the next one.
+      <br>
+      <button class="btn btn-gold btn-sm" data-pick="inOneLeft">+ Add One (fast)</button>
+      <button class="btn btn-ghost btn-sm" data-pick="inLeft">+ Add Many</button>
+    </div>
+    <input type="file" id="inOneLeft" accept="image/*">
+    <input type="file" id="inLeft" accept="image/*" multiple>
+    <div class="files" id="filesLeft"></div>
+    <button class="clear" data-clear="left" hidden>Remove all left cards</button>
+  </section>
+
+  <!-- RIGHT -->
+  <section class="panel">
+    <div class="panel-head">
+      <div class="panel-title">Right Cards</div>
+      <div class="count zero" id="cntRight">0</div>
+    </div>
+    <div class="drop" id="dropRight">
+      Tap "Add One" and choose a card. It returns instantly, so just tap again for the next one.
+      <br>
+      <button class="btn btn-gold btn-sm" data-pick="inOneRight">+ Add One (fast)</button>
+      <button class="btn btn-ghost btn-sm" data-pick="inRight">+ Add Many</button>
+    </div>
+    <input type="file" id="inOneRight" accept="image/*">
+    <input type="file" id="inRight" accept="image/*" multiple>
+    <div class="files" id="filesRight"></div>
+    <button class="clear" data-clear="right" hidden>Remove all right cards</button>
+  </section>
+
+  <details class="panel">
+    <summary>⚙ Position &amp; Size</summary>
+    <div class="settings">
+      <label>Left X <input type="number" id="xLeft" value="80"></label>
+      <label>Right X <input type="number" id="xRight" value="1122"></label>
+      <label>Y <input type="number" id="posY" value="323"></label>
+      <label>Card Width <input type="number" id="cardW" value="720"></label>
+      <label>Card Height <input type="number" id="cardH" value="441"></label>
+    </div>
+  </details>
+
+  <div class="actions">
+    <button class="btn btn-gold btn-main" id="goBtn">Create Cards</button>
+  </div>
+  <div class="progress" id="bar"><i id="barFill"></i></div>
+  <div id="status"></div>
+
+  <div class="results-head" id="resHead" hidden>
+    <h2>Ready</h2>
+    <button class="btn btn-ghost btn-sm" id="allBtn">Download All</button>
+  </div>
+  <div id="results"></div>
+
+</div>
+
+<script>
+const CANVAS_W = 1920, CANVAS_H = 1080;
+const $ = id => document.getElementById(id);
+const store = { left: [], right: [] };   // File[]
+const results = [];                       // {name, blob, url}
+
+/* ---------- adding files (accumulates across picks) ---------- */
+function addFiles(side, fileList) {
+  const known = new Set(store[side].map(f => f.name + "|" + f.size + "|" + f.lastModified));
+  for (const f of fileList) {
+    if (!/^image\//.test(f.type) && !/\.(jpe?g|png|webp)$/i.test(f.name)) continue;
+    const key = f.name + "|" + f.size + "|" + f.lastModified;
+    if (known.has(key)) continue;
+    known.add(key);
+    store[side].push(f);
+  }
+  renderSide(side);
+}
+
+function renderSide(side) {
+  const Side = side === "left" ? "Left" : "Right";
+  const box = $("files" + Side);
+  box.innerHTML = "";
+  store[side].forEach((f, i) => {
+    const d = document.createElement("div");
+    d.className = "file";
+    const img = document.createElement("img");
+    img.src = URL.createObjectURL(f);
+    img.onload = () => URL.revokeObjectURL(img.src);
+    const s = document.createElement("span");
+    s.textContent = f.name;
+    const x = document.createElement("button");
+    x.textContent = "×";
+    x.title = "Remove";
+    x.onclick = () => { store[side].splice(i, 1); renderSide(side); };
+    d.append(img, s, x);
+    box.appendChild(d);
+  });
+  const n = store[side].length;
+  const c = $("cnt" + Side);
+  c.textContent = n;
+  c.classList.toggle("zero", n === 0);
+  document.querySelector('[data-clear="' + side + '"]').hidden = n === 0;
+}
+
+document.querySelectorAll("[data-pick]").forEach(b => {
+  b.addEventListener("click", () => $(b.dataset.pick).click());
+});
+document.querySelectorAll("[data-clear]").forEach(b => {
+  b.addEventListener("click", () => { store[b.dataset.clear] = []; renderSide(b.dataset.clear); });
+});
+["left", "right"].forEach(side => {
+  const Side = side === "left" ? "Left" : "Right";
+  ["in" + Side, "inOne" + Side].forEach(id => {
+    const input = $(id);
+    input.addEventListener("change", () => { addFiles(side, input.files); input.value = ""; });
+  });
+  const drop = $("drop" + Side);
+  ["dragenter", "dragover"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add("over"); }));
+  ["dragleave", "drop"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove("over"); }));
+  drop.addEventListener("drop", e => addFiles(side, e.dataTransfer.files));
+});
+
+/* ---------- processing ---------- */
+function loadImage(file) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("Cannot read " + file.name)); };
+    img.src = url;
+  });
+}
+const toBlob = c => new Promise(res => c.toBlob(res, "image/png"));
+const tick = () => new Promise(r => setTimeout(r, 0));
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+function uniqueName(base, side) {
+  let name = base + "_" + side + ".png", n = 2;
+  while (results.some(r => r.name === name)) name = base + "_" + n++ + "_" + side + ".png";
+  return name;
+}
+
+function addResult(name, url) {
+  const d = document.createElement("div");
+  d.className = "item";
+  d.innerHTML = '<div class="thumb"><img alt=""></div><div class="name"></div><a class="btn btn-gold btn-sm">Download</a>';
+  d.querySelector("img").src = url;
+  d.querySelector(".name").textContent = name;
+  const a = d.querySelector("a");
+  a.href = url; a.download = name;
+  $("results").appendChild(d);
+}
+
+$("goBtn").addEventListener("click", async () => {
+  const total = store.left.length + store.right.length;
+  if (!total) { $("status").textContent = "Add some cards first."; return; }
+
+  const pos = { left: +$("xLeft").value, right: +$("xRight").value };
+  const y = +$("posY").value, w = +$("cardW").value, h = +$("cardH").value;
+
+  results.length = 0;
+  $("results").innerHTML = "";
+  $("resHead").hidden = true;
+  $("goBtn").disabled = true;
+  $("bar").style.display = "block";
+  $("barFill").style.width = "0%";
+
+  let done = 0;
+  for (const side of ["left", "right"]) {
+    for (const file of store[side]) {
+      try {
+        const img = await loadImage(file);
+        const canvas = document.createElement("canvas");
+        canvas.width = CANVAS_W; canvas.height = CANVAS_H;
+        const ctx = canvas.getContext("2d");
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = "high";
+        ctx.drawImage(img, pos[side], y, w, h);
+        const blob = await toBlob(canvas);
+        const name = uniqueName(file.name.replace(/\.[^.]+$/, ""), side);
+        const url = URL.createObjectURL(blob);
+        results.push({ name, blob, url });
+        addResult(name, url);
+      } catch (e) {
+        console.error(e);
+      }
+      done++;
+      $("barFill").style.width = Math.round(done / total * 100) + "%";
+      $("status").textContent = "Processing " + done + " / " + total;
+      await tick();
+    }
+  }
+
+  $("status").textContent = results.length + " card" + (results.length === 1 ? "" : "s") + " ready ✓";
+  $("goBtn").disabled = false;
+  $("resHead").hidden = results.length === 0;
+  setTimeout(() => { $("bar").style.display = "none"; }, 600);
+});
+
+/* ---------- download all: silent, one file per image (no ZIP) ---------- */
+function blobToDataURL(blob) {
+  return new Promise((resolve, reject) => {
+    const fr = new FileReader();
+    fr.onload = () => resolve(fr.result);
+    fr.onerror = () => reject(fr.error);
+    fr.readAsDataURL(blob);
+  });
+}
+
+// Native app wrapper bridge (Median / GoNative) if present
+function nativeBridge() {
+  if (window.median && median.share && typeof median.share.downloadFile === "function") return median.share.downloadFile;
+  if (window.gonative && gonative.share && typeof gonative.share.downloadFile === "function") return gonative.share.downloadFile;
+  return null;
+}
+
+async function saveOne(r) {
+  const bridge = nativeBridge();
+  if (bridge) {
+    const dataUrl = await blobToDataURL(r.blob);
+    bridge({ url: dataUrl, filename: r.name, open: false });
+    return;
+  }
+  // Normal browser / WebView: direct file download via blob link
+  const a = document.createElement("a");
+  a.href = r.url;
+  a.download = r.name;
+  a.style.display = "none";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
+let downloading = false;
+$("allBtn").addEventListener("click", async () => {
+  if (!results.length || downloading) return;
+  downloading = true;               // no visible change: no text, no disabled button
+  try {
+    for (const r of results) {
+      await saveOne(r);
+      await sleep(500);             // small gap so the phone accepts every file
+    }
+  } finally {
+    downloading = false;
+  }
+});
+</script>
+</body>
+</html>
